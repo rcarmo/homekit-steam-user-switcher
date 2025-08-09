@@ -1,0 +1,26 @@
+# systemd user unit for HomeKit Steam User Switcher
+# Install to: ~/.config/systemd/user/homekit-steam-user-switcher.service
+# Then run:
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now homekit-steam-user-switcher.service
+# View logs:
+#   journalctl --user -u homekit-steam-user-switcher.service -f
+
+[Unit]
+Description=HomeKit Steam User Switcher
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/env python3 %h/.local/bin/homekit_steam_user_switcher.py --name "Steam Switcher" --port 51826 --bind auto
+Restart=on-failure
+RestartSec=5s
+
+# Optional hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

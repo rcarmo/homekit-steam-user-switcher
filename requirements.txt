@@ -1,0 +1,2 @@
+HAP-python[QRCode]
+vdf
