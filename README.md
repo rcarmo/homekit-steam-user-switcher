@@ -1,6 +1,6 @@
 # HomeKit Steam User Switcher
 
-This script exposes HomeKit Television accessory where each Input corresponds to a Steam user. Selecting an input updates the stSteam’s AutoLoginUser; turning the TV off restarts Steam.
+This script exposes a virtual HomeKit Television accessory where each input corresponds to a Steam user. Selecting an input updates the Steam’s AutoLoginUser; turning the "TV" off restarts Steam.
 
 ## Why
 
