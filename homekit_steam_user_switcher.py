@@ -11,6 +11,50 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import asyncio
+
+# Python 3.14 compatibility shim for HAP-python versions that still expect
+# asyncio.SafeChildWatcher and asyncio.set_child_watcher. Newer Python
+# removed both SafeChildWatcher, AbstractChildWatcher and set_child_watcher,
+# so we provide minimal no-op stand-ins.
+if not hasattr(asyncio, "SafeChildWatcher"):
+    try:
+        base_cls = getattr(asyncio, "AbstractChildWatcher")  # Python <= 3.13
+    except AttributeError:
+        base_cls = object  # Python 3.14+: just use a plain object
+
+    class _DummyChildWatcher(base_cls):  # type: ignore[misc]
+        def add_child_handler(self, pid, callback, *args):  # noqa: D401
+            """Ignored: child process handling is not used here."""
+            return None
+
+        def remove_child_handler(self, pid):  # noqa: D401
+            """Ignored: no handlers are actually registered."""
+            return False
+
+        def attach_loop(self, loop):  # noqa: D401
+            """Optionally remember loop; PyHAP won't rely on it here."""
+            if hasattr(self, "__dict__"):
+                self._loop = loop  # type: ignore[attr-defined]
+
+        def detach_loop(self):  # noqa: D401
+            """Drop stored loop reference, if any."""
+            if hasattr(self, "__dict__") and hasattr(self, "_loop"):
+                del self._loop  # type: ignore[attr-defined]
+
+        def close(self):  # noqa: D401
+            """Nothing to clean up for the dummy watcher."""
+            return None
+
+    asyncio.SafeChildWatcher = _DummyChildWatcher  # type: ignore[attr-defined]
+
+if not hasattr(asyncio, "set_child_watcher"):
+    def _noop_set_child_watcher(watcher):  # type: ignore[unused-argument]
+        """Compatibility no-op for asyncio.set_child_watcher on Python 3.14+."""
+        return None
+
+    asyncio.set_child_watcher = _noop_set_child_watcher  # type: ignore[attr-defined]
+
 from pyhap.accessory import Accessory
 from pyhap.accessory_driver import AccessoryDriver
 from pyhap.const import CATEGORY_TELEVISION
